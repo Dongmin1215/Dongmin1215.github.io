@@ -422,6 +422,12 @@ main {
   top: 2.2rem;
 }
 
+.location .flower{
+  color: #888;
+  font-size: 0.6rem; 
+  padding-top: 1rem;
+}
+
 /* 안내사항 */
 .guide {
   text-align: left;
