@@ -111,7 +111,7 @@ main {
 }
 .greeting .message {
   margin-bottom: 5rem;
-  padding: 9rem 3.2rem 0 3.2rem;
+  padding: 9rem 3.2rem 4rem 3.2rem;
   text-align: left;
   background-image: url("../images/icon/ring.png");
   background-size: 2rem;
