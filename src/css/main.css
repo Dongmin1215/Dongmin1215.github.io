@@ -169,7 +169,8 @@ main {
   align-items: center;
   background-color: #ffdc6f;
   margin-top: 5rem;
-  padding: 3rem 0;
+  padding-top : 1.5rem;
+  padding-bottom : 0;
 }
 .calendar .contents {
   width: 90vw;
@@ -217,6 +218,17 @@ main {
   background-color: #ffdc6f;
   color: #fff;
   border-radius: 50%;
+}
+
+/* 코비드 안내 */
+.covid-noti {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffdc6f; 
+  padding-bottom: 1rem;  
+  font-size: 0.7rem;
+  color : #4e3e0a;
 }
 
 /* 갤러리 */
