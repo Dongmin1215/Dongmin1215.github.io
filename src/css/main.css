@@ -129,6 +129,9 @@ main {
   color: #666;
   line-height: 1.5rem;
 }
+.message-small {
+  font-size: 0.7em;
+}
 /*
 .greeting .message p::first-letter {
   font-weight: bold;
