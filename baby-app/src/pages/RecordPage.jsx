@@ -101,7 +101,7 @@ function PlayRow({ options, onSave }) {
             </div>
           </>
         ) : (
-          <div style={{ display: 'flex', flex: 1, gap: 8 }}>
+          <div style={{ display: 'flex', flex: 1, gap: 8, width: '100%' }}>
             {options.map(opt => (
               <button
                 key={opt.id}
@@ -136,7 +136,7 @@ function FeedRow({ options, onSave }) {
         <span style={nameStyle}>수유</span>
       </div>
       <div style={actionStyle}>
-        <div style={{ display: 'flex', flex: 1, gap: 8 }}>
+        <div style={{ display: 'flex', flex: 1, gap: 8, width: '100%' }}>
           {options.map(opt => (
             <button
               key={opt.id}
