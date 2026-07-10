@@ -37,13 +37,33 @@
         overflow: hidden;
       }
 
-      .timeline-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #888;
-        letter-spacing: 1px;
+      .timeline-header {
         text-align: center;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .baby-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #333;
+        letter-spacing: 2px;
+      }
+
+      .dday-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        padding: 4px 14px;
+        background: #FFE8F2;
+        color: #E91E8C;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 1px;
       }
 
       .timeline-scroll {
@@ -257,9 +277,98 @@
 
       .stop-btn:active { background: #f0f0f0; }
 
+      /* 서브타입 두 버튼 공통 */
+      .play-subtypes,
+      .feed-subtypes { gap: 8px; }
+      .play-subtypes .start-btn,
+      .feed-subtypes .start-btn { font-size: 20px; }
+
+      .play-subtype-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #F5A623;
+        letter-spacing: 1px;
+      }
+
+      .feed-subtype-label {
+        font-size: 15px;
+        font-weight: 700;
+        color: #6CC83A;
+        letter-spacing: 1px;
+      }
+
       /* active 상태일 때 액션 영역 */
       .control-row.active .start-btn-wrap { display: none; }
       .control-row.active .active-display  { display: flex; }
+
+      /* 놀이 분 입력 폼 */
+      .play-input-display { gap: 14px !important; }
+
+      .minutes-input-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .minutes-input {
+        width: 90px;
+        font-size: 36px;
+        font-weight: 700;
+        text-align: center;
+        border: 2.5px solid #F5A623;
+        border-radius: 14px;
+        padding: 6px 8px;
+        color: #333;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .minutes-unit {
+        font-size: 22px;
+        font-weight: 700;
+        color: #555;
+      }
+
+      .play-input-btns {
+        display: flex;
+        gap: 10px;
+      }
+
+      .cancel-btn {
+        padding: 12px 22px;
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #aaa;
+        background: #fff;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .save-play-btn {
+        padding: 12px 28px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
+        background: #F5A623;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: filter 0.15s;
+      }
+
+      .save-play-btn:active { filter: brightness(0.9); }
+
+      /* 수유 기록됨 피드백 */
+      .start-btn.recorded {
+        background: #6CC83A !important;
+        color: #fff !important;
+        border-color: #6CC83A !important;
+        transition: none;
+      }
     </style>
   </head>
 
@@ -268,7 +377,10 @@
 
       <!-- ── 타임라인 ── -->
       <div class="timeline-panel">
-        <div class="timeline-title">하루 일과표</div>
+        <div class="timeline-header">
+          <div class="baby-title">👼🏻 이안이의 하루</div>
+          <div class="dday-badge" id="ddayBadge">D+...</div>
+        </div>
         <div class="timeline-scroll">
           <div class="time-labels" id="timeLabels"></div>
           <div class="timeline-track" id="timelineTrack">
@@ -301,15 +413,22 @@
           <div class="category-card play">
             <span class="emoji">🧸</span>
             <span class="name">놀이</span>
-            <span class="badge-active"></span>
           </div>
           <div class="action-area">
-            <div class="start-btn-wrap">
-              <button class="start-btn">시작하기</button>
+            <div class="start-btn-wrap play-subtypes">
+              <button class="start-btn" data-subtype="tummy_time">터미타임</button>
+              <button class="start-btn" data-subtype="baby_gym">아기 체육관</button>
             </div>
-            <div class="active-display">
-              <div class="timer-text">00:00:00</div>
-              <button class="stop-btn">종료</button>
+            <div class="active-display play-input-display">
+              <div class="play-subtype-label"></div>
+              <div class="minutes-input-row">
+                <input type="number" class="minutes-input" min="1" max="180" placeholder="0">
+                <span class="minutes-unit">분</span>
+              </div>
+              <div class="play-input-btns">
+                <button class="cancel-btn">취소</button>
+                <button class="save-play-btn">저장</button>
+              </div>
             </div>
           </div>
         </div>
@@ -318,15 +437,11 @@
           <div class="category-card feed">
             <span class="emoji">🍼</span>
             <span class="name">수유</span>
-            <span class="badge-active"></span>
           </div>
           <div class="action-area">
-            <div class="start-btn-wrap">
-              <button class="start-btn">시작하기</button>
-            </div>
-            <div class="active-display">
-              <div class="timer-text">00:00:00</div>
-              <button class="stop-btn">종료</button>
+            <div class="start-btn-wrap feed-subtypes">
+              <button class="start-btn" data-subtype="150ml">150ml</button>
+              <button class="start-btn" data-subtype="180ml">180ml</button>
             </div>
           </div>
         </div>
@@ -390,9 +505,11 @@
         push(dayRef).then(newRef => set(newRef, record));
       }
 
+      const SUBTYPE_LABEL = { tummy_time: '터미타임', baby_gym: '아기 체육관', '150ml': '150ml', '180ml': '180ml' };
+
       // ── 시작 ──
-      function startSession(type) {
-        activeSessions[type] = { startTime: Date.now() };
+      function startSession(type, subtype = null) {
+        activeSessions[type] = { startTime: Date.now(), subtype };
         localStorage.setItem('baby_active', JSON.stringify(activeSessions));
         updateRows();
         startTick();
@@ -403,6 +520,7 @@
         const session = activeSessions[type];
         if (!session) return;
         const record = { type, startTime: session.startTime, endTime: Date.now() };
+        if (session.subtype) record.subtype = session.subtype;
         delete activeSessions[type];
         localStorage.setItem('baby_active', JSON.stringify(activeSessions));
         saveRecord(record);
@@ -410,26 +528,70 @@
         if (Object.keys(activeSessions).length === 0) stopTick();
       }
 
-      // ── UI: 각 row 상태 갱신 ──
-      function updateRows() {
-        document.querySelectorAll('.control-row').forEach(row => {
-          const type = row.dataset.type;
-          const isActive = !!activeSessions[type];
-          row.classList.toggle('active', isActive);
-          row.querySelector('.category-card').classList.toggle('active', isActive);
-        });
+      // ── 놀이: 분 입력 폼 열기/닫기 ──
+      let pendingPlaySubtype = null;
+
+      function showPlayInput(subtype) {
+        pendingPlaySubtype = subtype;
+        const row = document.querySelector('.control-row[data-type="play"]');
+        row.querySelector('.play-subtype-label').textContent = SUBTYPE_LABEL[subtype];
+        row.querySelector('.minutes-input').value = '';
+        row.classList.add('active');
+        setTimeout(() => row.querySelector('.minutes-input').focus(), 100);
       }
 
-      // ── UI: 타이머 텍스트 갱신 ──
+      function savePlaySession() {
+        const row = document.querySelector('.control-row[data-type="play"]');
+        const minutes = parseInt(row.querySelector('.minutes-input').value);
+        if (!minutes || minutes < 1) {
+          row.querySelector('.minutes-input').focus();
+          return;
+        }
+        const endTime   = Date.now();
+        const startTime = endTime - minutes * 60 * 1000;
+        saveRecord({ type: 'play', subtype: pendingPlaySubtype, startTime, endTime });
+        closePlayInput();
+        renderTimeline();
+      }
+
+      function closePlayInput() {
+        pendingPlaySubtype = null;
+        document.querySelector('.control-row[data-type="play"]').classList.remove('active');
+      }
+
+      // ── 수유: 즉시 15분 기록 ──
+      function recordFeed(subtype, btn) {
+        const startTime = Date.now();
+        const endTime   = startTime + 15 * 60 * 1000;
+        saveRecord({ type: 'feed', subtype, startTime, endTime });
+
+        btn.classList.add('recorded');
+        const orig = btn.textContent;
+        btn.textContent = '✓ 기록됨';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.classList.remove('recorded');
+          btn.textContent = orig;
+          btn.disabled = false;
+        }, 1500);
+      }
+
+      // ── UI: 각 row 상태 갱신 (수면만) ──
+      function updateRows() {
+        const row = document.querySelector('.control-row[data-type="sleep"]');
+        const session = activeSessions['sleep'];
+        const isActive = !!session;
+        row.classList.toggle('active', isActive);
+        row.querySelector('.category-card').classList.toggle('active', isActive);
+      }
+
+      // ── UI: 타이머 텍스트 갱신 (수면만) ──
       function updateTimers() {
-        const now = Date.now();
-        document.querySelectorAll('.control-row').forEach(row => {
-          const type = row.dataset.type;
-          const session = activeSessions[type];
-          if (!session) return;
-          const elapsed = Math.floor((now - session.startTime) / 1000);
-          row.querySelector('.timer-text').textContent = formatElapsed(elapsed);
-        });
+        const session = activeSessions['sleep'];
+        if (session) {
+          const elapsed = Math.floor((Date.now() - session.startTime) / 1000);
+          document.querySelector('.control-row[data-type="sleep"] .timer-text').textContent = formatElapsed(elapsed);
+        }
         renderTimeline();
       }
 
@@ -507,11 +669,40 @@
       // ── 이벤트 바인딩 ──
       document.querySelectorAll('.control-row').forEach(row => {
         const type = row.dataset.type;
-        row.querySelector('.start-btn').addEventListener('click', () => startSession(type));
-        row.querySelector('.stop-btn').addEventListener('click', () => stopSession(type));
+        if (type === 'feed') {
+          row.querySelectorAll('.start-btn').forEach(btn => {
+            btn.addEventListener('click', () => recordFeed(btn.dataset.subtype, btn));
+          });
+        } else if (type === 'play') {
+          row.querySelectorAll('.start-btn').forEach(btn => {
+            btn.addEventListener('click', () => showPlayInput(btn.dataset.subtype));
+          });
+          row.querySelector('.cancel-btn').addEventListener('click', closePlayInput);
+          row.querySelector('.save-play-btn').addEventListener('click', savePlaySession);
+          row.querySelector('.minutes-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') savePlaySession();
+          });
+        } else {
+          row.querySelectorAll('.start-btn').forEach(btn => {
+            btn.addEventListener('click', () => startSession(type, btn.dataset.subtype ?? null));
+          });
+          row.querySelector('.stop-btn').addEventListener('click', () => stopSession(type));
+        }
       });
 
+      // ── D+ 계산 ──
+      const BIRTH_DATE = new Date('2026-04-15');
+      function updateDday() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const birth = new Date(BIRTH_DATE);
+        birth.setHours(0, 0, 0, 0);
+        const days = Math.floor((today - birth) / 86400000) + 1;
+        document.getElementById('ddayBadge').textContent = `D+${days}`;
+      }
+
       // ── 초기화 ──
+      updateDday();
       buildTimeLabels();
       updateRows();
       renderTimeline();
