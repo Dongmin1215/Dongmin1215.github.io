@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <title>아기 일과 기록</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, 'Apple SD Gothic Neo', sans-serif;
+        background: #f0f2f5;
+        height: 100dvh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        overflow: hidden;
+      }
+
+      .container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        max-height: 740px;
+        gap: 16px;
+      }
+
+      /* ───── 타임라인 패널 ───── */
+      .timeline-panel {
+        flex: 38;
+        background: #fff;
+        border-radius: 16px;
+        padding: 16px 12px 16px 8px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .timeline-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #888;
+        letter-spacing: 1px;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .timeline-scroll {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+      }
+
+      /* 시간 레이블 */
+      .time-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 36px;
+        flex-shrink: 0;
+        padding: 0 4px 0 0;
+      }
+
+      .time-label {
+        font-size: 11px;
+        color: #aaa;
+        text-align: right;
+        line-height: 1;
+      }
+
+      /* 블록 영역 */
+      .timeline-track {
+        flex: 1;
+        position: relative;
+        background: #f8f8f8;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      /* 가로 눈금선 */
+      .timeline-track::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent,
+          transparent calc(100% / 16 - 1px),
+          #eee calc(100% / 16 - 1px),
+          #eee calc(100% / 16)
+        );
+        pointer-events: none;
+      }
+
+      .activity-block {
+        position: absolute;
+        left: 10%;
+        width: 80%;
+        border-radius: 6px;
+        opacity: 0.88;
+        transition: opacity 0.2s;
+      }
+
+      .activity-block.sleep { background: #E91E8C; }
+      .activity-block.play  { background: #F5A623; }
+      .activity-block.feed  { background: #6CC83A; }
+
+      /* 현재 시각 선 */
+      .now-line {
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #ff3b30;
+        z-index: 5;
+      }
+
+      .now-line::before {
+        content: '';
+        position: absolute;
+        left: -4px;
+        top: -4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ff3b30;
+      }
+
+      /* ───── 컨트롤 패널 ───── */
+      .controls-panel {
+        flex: 62;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .control-row {
+        flex: 1;
+        display: flex;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      /* 왼쪽: 카테고리 카드 */
+      .category-card {
+        flex: 4;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: #fff;
+        user-select: none;
+        position: relative;
+      }
+
+      .category-card.sleep { background: #E91E8C; }
+      .category-card.play  { background: #F5A623; }
+      .category-card.feed  { background: #6CC83A; }
+
+      .category-card .emoji { font-size: 32px; line-height: 1; }
+      .category-card .name  { font-size: 22px; font-weight: 700; }
+
+      .badge-active {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0;
+        transition: opacity 0.3s;
+        box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
+      }
+
+      .category-card.active .badge-active {
+        opacity: 1;
+        animation: pulse 1.4s infinite;
+      }
+
+      @keyframes pulse {
+        0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.7); }
+        70%  { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+        100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+      }
+
+      /* 오른쪽: 액션 영역 */
+      .action-area {
+        flex: 5;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        overflow: hidden;
+      }
+
+      .start-btn-wrap {
+        flex: 1;
+        display: flex;
+      }
+
+      /* idle 상태 */
+      .start-btn {
+        flex: 1;
+        border-radius: 20px;
+        font-size: 26px;
+        font-weight: 700;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.15s, transform 0.1s;
+        background: #fff;
+      }
+
+      .start-btn:active { transform: scale(0.98); filter: brightness(0.95); }
+
+      .control-row[data-type="sleep"] .start-btn { border: 3px solid #E91E8C; color: #E91E8C; }
+      .control-row[data-type="play"]  .start-btn { border: 3px solid #F5A623; color: #F5A623; }
+      .control-row[data-type="feed"]  .start-btn { border: 3px solid #6CC83A; color: #6CC83A; }
+
+      /* active 상태 */
+      .active-display {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        flex: 1;
+        background: #fff;
+        border-radius: 20px;
+      }
+
+      .timer-text {
+        font-size: 32px;
+        font-weight: 700;
+        color: #222;
+        letter-spacing: 2px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stop-btn {
+        width: 160px;
+        padding: 14px 0;
+        border: 2px solid #ddd;
+        border-radius: 14px;
+        font-size: 18px;
+        font-weight: 700;
+        color: #555;
+        background: #fff;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.15s;
+      }
+
+      .stop-btn:active { background: #f0f0f0; }
+
+      /* active 상태일 때 액션 영역 */
+      .control-row.active .start-btn-wrap { display: none; }
+      .control-row.active .active-display  { display: flex; }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+
+      <!-- ── 타임라인 ── -->
+      <div class="timeline-panel">
+        <div class="timeline-title">하루 일과표</div>
+        <div class="timeline-scroll">
+          <div class="time-labels" id="timeLabels"></div>
+          <div class="timeline-track" id="timelineTrack">
+            <div class="now-line" id="nowLine"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── 컨트롤 ── -->
+      <div class="controls-panel">
+
+        <div class="control-row" data-type="sleep">
+          <div class="category-card sleep">
+            <span class="emoji">🌙</span>
+            <span class="name">수면</span>
+            <span class="badge-active"></span>
+          </div>
+          <div class="action-area">
+            <div class="start-btn-wrap">
+              <button class="start-btn">시작하기</button>
+            </div>
+            <div class="active-display">
+              <div class="timer-text">00:00:00</div>
+              <button class="stop-btn">종료</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row" data-type="play">
+          <div class="category-card play">
+            <span class="emoji">🧸</span>
+            <span class="name">놀이</span>
+            <span class="badge-active"></span>
+          </div>
+          <div class="action-area">
+            <div class="start-btn-wrap">
+              <button class="start-btn">시작하기</button>
+            </div>
+            <div class="active-display">
+              <div class="timer-text">00:00:00</div>
+              <button class="stop-btn">종료</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row" data-type="feed">
+          <div class="category-card feed">
+            <span class="emoji">🍼</span>
+            <span class="name">수유</span>
+            <span class="badge-active"></span>
+          </div>
+          <div class="action-area">
+            <div class="start-btn-wrap">
+              <button class="start-btn">시작하기</button>
+            </div>
+            <div class="active-display">
+              <div class="timer-text">00:00:00</div>
+              <button class="stop-btn">종료</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp }  from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+      import { getDatabase, ref, push, set, onValue, query, orderByChild, startAt }
+        from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+
+      // ── Firebase 초기화 ──
+      const app = initializeApp({
+        apiKey: "AIzaSyDW8o_odngQSWuhoxTOVKLdA-ukgVv4m6E",
+        authDomain: "msdm-mobile-invitation.firebaseapp.com",
+        databaseURL: "https://msdm-mobile-invitation-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "msdm-mobile-invitation",
+        storageBucket: "msdm-mobile-invitation.appspot.com",
+        messagingSenderId: "440320271279",
+        appId: "1:440320271279:web:485377ffbeb9d8ee68455a"
+      });
+      const db = getDatabase(app);
+
+      // ── 상수 ──
+      const TIMELINE_START = 6;   // 오전 6시
+      const TIMELINE_END   = 22;  // 오후 10시
+      const TOTAL_HOURS    = TIMELINE_END - TIMELINE_START;
+      const COLORS = { sleep: '#EE82A4', play: '#F5B96E', feed: '#80C97F' };
+
+      // ── 상태 ──
+      let activeSessions = {};   // { sleep: { startTime }, ... }
+      let completedRecords = []; // { type, startTime, endTime }
+      let tickInterval = null;
+
+      // ── localStorage 복원 ──
+      const saved = localStorage.getItem('baby_active');
+      if (saved) activeSessions = JSON.parse(saved);
+
+      // ── 오늘 날짜 키 ──
+      function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      // ── Firebase: 오늘 기록 로드 ──
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const recordsRef = ref(db, `baby/records/${todayKey()}`);
+      onValue(recordsRef, snapshot => {
+        completedRecords = [];
+        snapshot.forEach(child => {
+          completedRecords.push(child.val());
+        });
+        renderTimeline();
+      });
+
+      // ── Firebase: 기록 저장 ──
+      function saveRecord(record) {
+        const dayRef = ref(db, `baby/records/${todayKey()}`);
+        push(dayRef).then(newRef => set(newRef, record));
+      }
+
+      // ── 시작 ──
+      function startSession(type) {
+        activeSessions[type] = { startTime: Date.now() };
+        localStorage.setItem('baby_active', JSON.stringify(activeSessions));
+        updateRows();
+        startTick();
+      }
+
+      // ── 종료 ──
+      function stopSession(type) {
+        const session = activeSessions[type];
+        if (!session) return;
+        const record = { type, startTime: session.startTime, endTime: Date.now() };
+        delete activeSessions[type];
+        localStorage.setItem('baby_active', JSON.stringify(activeSessions));
+        saveRecord(record);
+        updateRows();
+        if (Object.keys(activeSessions).length === 0) stopTick();
+      }
+
+      // ── UI: 각 row 상태 갱신 ──
+      function updateRows() {
+        document.querySelectorAll('.control-row').forEach(row => {
+          const type = row.dataset.type;
+          const isActive = !!activeSessions[type];
+          row.classList.toggle('active', isActive);
+          row.querySelector('.category-card').classList.toggle('active', isActive);
+        });
+      }
+
+      // ── UI: 타이머 텍스트 갱신 ──
+      function updateTimers() {
+        const now = Date.now();
+        document.querySelectorAll('.control-row').forEach(row => {
+          const type = row.dataset.type;
+          const session = activeSessions[type];
+          if (!session) return;
+          const elapsed = Math.floor((now - session.startTime) / 1000);
+          row.querySelector('.timer-text').textContent = formatElapsed(elapsed);
+        });
+        renderTimeline();
+      }
+
+      function formatElapsed(sec) {
+        const h = String(Math.floor(sec / 3600)).padStart(2, '0');
+        const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `${h}:${m}:${s}`;
+      }
+
+      function startTick() {
+        if (tickInterval) return;
+        tickInterval = setInterval(updateTimers, 1000);
+      }
+
+      function stopTick() {
+        clearInterval(tickInterval);
+        tickInterval = null;
+      }
+
+      // ── 타임라인 렌더 ──
+      function timeToPercent(ts) {
+        const d = new Date(ts);
+        const hours = d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+        return Math.min(100, Math.max(0, (hours - TIMELINE_START) / TOTAL_HOURS * 100));
+      }
+
+      function renderTimeline() {
+        const track = document.getElementById('timelineTrack');
+
+        // 기존 블록 제거 (now-line 은 유지)
+        track.querySelectorAll('.activity-block').forEach(el => el.remove());
+
+        // 완료된 기록
+        completedRecords.forEach(rec => {
+          const top    = timeToPercent(rec.startTime);
+          const bottom = timeToPercent(rec.endTime);
+          if (bottom <= top) return;
+          const block = document.createElement('div');
+          block.className = `activity-block ${rec.type}`;
+          block.style.top    = `${top}%`;
+          block.style.height = `${bottom - top}%`;
+          track.appendChild(block);
+        });
+
+        // 진행 중인 세션
+        Object.entries(activeSessions).forEach(([type, session]) => {
+          const top    = timeToPercent(session.startTime);
+          const bottom = timeToPercent(Date.now());
+          if (bottom <= top) return;
+          const block = document.createElement('div');
+          block.className = `activity-block ${type}`;
+          block.style.top    = `${top}%`;
+          block.style.height = `${bottom - top}%`;
+          block.style.opacity = '1';
+          track.appendChild(block);
+        });
+
+        // 현재 시각 선
+        const nowPct = timeToPercent(Date.now());
+        document.getElementById('nowLine').style.top = `${nowPct}%`;
+      }
+
+      // ── 시간 레이블 생성 ──
+      function buildTimeLabels() {
+        const container = document.getElementById('timeLabels');
+        for (let h = TIMELINE_START; h <= TIMELINE_END; h++) {
+          const el = document.createElement('div');
+          el.className = 'time-label';
+          el.textContent = h < 12 ? `${h}AM` : h === 12 ? '12PM' : `${h - 12}PM`;
+          container.appendChild(el);
+        }
+      }
+
+      // ── 이벤트 바인딩 ──
+      document.querySelectorAll('.control-row').forEach(row => {
+        const type = row.dataset.type;
+        row.querySelector('.start-btn').addEventListener('click', () => startSession(type));
+        row.querySelector('.stop-btn').addEventListener('click', () => stopSession(type));
+      });
+
+      // ── 초기화 ──
+      buildTimeLabels();
+      updateRows();
+      renderTimeline();
+      if (Object.keys(activeSessions).length > 0) {
+        updateTimers();
+        startTick();
+      }
+    </script>
+  </body>
+</html>
