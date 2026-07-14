@@ -19,7 +19,7 @@ const app = express()
 const DB_PREFIX = process.env.NODE_ENV === 'production' ? '' : 'dev/'
 
 const ALLOWED_ORIGINS = process.env.CORS_ORIGIN
-  ? [process.env.CORS_ORIGIN, 'http://localhost:5173']
+  ? [process.env.CORS_ORIGIN, 'http://localhost:5173', 'http://localhost:8080']
   : '*'
 app.use(cors({ origin: ALLOWED_ORIGINS }))
 app.use(express.json())
