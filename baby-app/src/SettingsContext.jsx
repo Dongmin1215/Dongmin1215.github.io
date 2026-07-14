@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API = window.location.hostname === 'localhost'
+  ? 'http://localhost:3001'
+  : 'https://dongmin1215-github-io.onrender.com'
 
 const DEFAULT_SETTINGS = {
   birthDate: '2026-04-15',
