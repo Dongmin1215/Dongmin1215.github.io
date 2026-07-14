@@ -16,12 +16,14 @@ initializeApp({
 const db = getDatabase()
 const app = express()
 
+const DB_PREFIX = process.env.NODE_ENV === 'production' ? '' : 'dev/'
+
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
 app.use(express.json())
 
 app.get('/api/records/:date', async (req, res) => {
   try {
-    const snap = await db.ref(`baby/records/${req.params.date}`).once('value')
+    const snap = await db.ref(`${DB_PREFIX}baby/records/${req.params.date}`).once('value')
     const records = []
     snap.forEach(child => records.push({ _id: child.key, ...child.val() }))
     res.json(records)
@@ -32,7 +34,7 @@ app.get('/api/records/:date', async (req, res) => {
 
 app.post('/api/records/:date', async (req, res) => {
   try {
-    const newRef = db.ref(`baby/records/${req.params.date}`).push()
+    const newRef = db.ref(`${DB_PREFIX}baby/records/${req.params.date}`).push()
     await newRef.set(req.body)
     res.json({ _id: newRef.key })
   } catch (err) {
@@ -42,7 +44,7 @@ app.post('/api/records/:date', async (req, res) => {
 
 app.get('/api/settings', async (req, res) => {
   try {
-    const snap = await db.ref('baby/settings').once('value')
+    const snap = await db.ref(`${DB_PREFIX}baby/settings`).once('value')
     res.json(snap.val())
   } catch (err) {
     res.status(500).json({ error: err.message })
@@ -51,7 +53,7 @@ app.get('/api/settings', async (req, res) => {
 
 app.put('/api/settings', async (req, res) => {
   try {
-    await db.ref('baby/settings').set(req.body)
+    await db.ref(`${DB_PREFIX}baby/settings`).set(req.body)
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })
