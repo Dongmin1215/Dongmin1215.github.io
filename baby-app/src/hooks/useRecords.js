@@ -1,31 +1,42 @@
-import { useEffect, useState } from 'react'
-import { ref, onValue, push, set as fbSet } from 'firebase/database'
-import { db } from '../firebase'
+import { useCallback, useEffect, useState } from 'react'
 
-function todayKey() {
-  return new Date().toISOString().slice(0, 10)
-}
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-function dateKey(date) {
-  return date.toISOString().slice(0, 10)
+function localDateKey(date) {
+  const d = date ?? new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 export function useRecords(date) {
-  const key = date ? dateKey(date) : todayKey()
+  const key = localDateKey(date)
   const [records, setRecords] = useState([])
 
-  useEffect(() => {
-    const r = ref(db, `baby/records/${key}`)
-    return onValue(r, snap => {
-      const list = []
-      snap.forEach(child => list.push({ _id: child.key, ...child.val() }))
-      setRecords(list)
-    })
+  const fetchRecords = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/api/records/${key}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      setRecords(await res.json())
+    } catch (err) {
+      console.error('[useRecords] fetch error:', err)
+    }
   }, [key])
 
-  function saveRecord(record) {
-    const dayRef = ref(db, `baby/records/${key}`)
-    push(dayRef).then(newRef => fbSet(newRef, record))
+  useEffect(() => {
+    fetchRecords()
+  }, [fetchRecords])
+
+  async function saveRecord(record) {
+    try {
+      const res = await fetch(`${API}/api/records/${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(record),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      fetchRecords()
+    } catch (err) {
+      console.error('[saveRecord] error:', err)
+    }
   }
 
   return { records, saveRecord }

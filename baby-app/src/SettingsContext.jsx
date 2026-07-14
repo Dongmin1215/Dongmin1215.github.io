@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { ref, onValue, set } from 'firebase/database'
-import { db } from './firebase'
+
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 const DEFAULT_SETTINGS = {
   birthDate: '2026-04-15',
@@ -21,16 +21,24 @@ export function SettingsProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const r = ref(db, 'baby/settings')
-    return onValue(r, snap => {
-      if (snap.exists()) setSettings({ ...DEFAULT_SETTINGS, ...snap.val() })
-      setLoading(false)
-    })
+    fetch(`${API}/api/settings`)
+      .then(res => res.json())
+      .then(data => { if (data) setSettings({ ...DEFAULT_SETTINGS, ...data }) })
+      .catch(err => console.error('[settings] fetch error:', err))
+      .finally(() => setLoading(false))
   }, [])
 
-  function saveSettings(next) {
+  async function saveSettings(next) {
     setSettings(next)
-    set(ref(db, 'baby/settings'), next)
+    try {
+      await fetch(`${API}/api/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      })
+    } catch (err) {
+      console.error('[settings] save error:', err)
+    }
   }
 
   return (
