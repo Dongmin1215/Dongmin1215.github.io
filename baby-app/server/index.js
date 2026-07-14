@@ -18,7 +18,10 @@ const app = express()
 
 const DB_PREFIX = process.env.NODE_ENV === 'production' ? '' : 'dev/'
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }))
+const ALLOWED_ORIGINS = process.env.CORS_ORIGIN
+  ? [process.env.CORS_ORIGIN, 'http://localhost:5173']
+  : '*'
+app.use(cors({ origin: ALLOWED_ORIGINS }))
 app.use(express.json())
 
 app.get('/api/records/:date', async (req, res) => {
