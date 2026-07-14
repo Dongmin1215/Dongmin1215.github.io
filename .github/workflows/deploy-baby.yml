@@ -25,6 +25,8 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: baby-app
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       - name: Commit built files
         run: |
